@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
-
+DATA_DIR = 'data/'
+features_path = DATA_DIR + 'elliptic_txs_features.csv'
+classes_path = DATA_DIR + 'elliptic_txs_classes.csv'
 # Load data
-features = pd.read_csv('elliptic_txs_features.csv', header=None)
-classes = pd.read_csv('elliptic_txs_classes.csv', header=None,
+features = pd.read_csv(features_path, header=None)
+classes = pd.read_csv(classes_path, header=None,
                       names=['id', 'class'])
 
 # 🔥 CLEAN classes (this is the key fix)

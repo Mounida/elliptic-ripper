@@ -1,9 +1,15 @@
 import pandas as pd
+import os
+
+DATA_DIR = 'data/'
+features_path= os.path.join(DATA_DIR, 'elliptic_txs_features.csv')
+classes_path= os.path.join(DATA_DIR, 'elliptic_txs_classes.csv')
+edges_path= os.path.join(DATA_DIR, 'elliptic_txs_edgelist.csv')
 
 # Load the three files
-features = pd.read_csv('elliptic_txs_features.csv', header=None)
-classes = pd.read_csv('elliptic_txs_classes.csv')
-edges = pd.read_csv('elliptic_txs_edgelist.csv', header=None,
+features = pd.read_csv(features_path, header=None)
+classes = pd.read_csv(classes_path)
+edges = pd.read_csv(edges_path, header=None,
                     names=['source', 'target'])
 
 # Fix column names
