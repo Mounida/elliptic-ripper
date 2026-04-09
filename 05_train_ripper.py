@@ -1,0 +1,55 @@
+import pandas as pd
+import numpy as np
+import os
+import json
+import pickle
+from wittgenstein import RIPPER
+
+DATA_DIR = 'data/'
+TRAIN_PATH = os.path.join(DATA_DIR, 'train.csv')
+WEIGHTS_PATH = os.path.join(DATA_DIR, 'class_weights.json')
+MODEL_PATH = os.path.join(DATA_DIR, 'ripper_model.pkl')
+
+
+# Load training data
+train = pd.read_csv(TRAIN_PATH)
+# Load class weights
+with open(WEIGHTS_PATH, 'r') as f:
+    class_weights = json.load(f)
+
+weight_illicit = class_weights['1']
+weight_licit = class_weights['0']
+
+print(f"Loaded training data: {train.shape}")
+print(f"Class weights — Illicit: {weight_illicit}, Licit: {weight_licit}")
+
+# Separate features and labels
+feature_cols = [col for col in train.columns if col.startswith('f')]
+X_train = train[feature_cols]
+y_train = train['class']
+
+print(f"Features: {len(feature_cols)}")
+print(f"Illicit transactions: {(y_train == 1).sum()}")
+print(f"Licit transactions: {(y_train == 0).sum()}")
+
+
+# Repeat illicit transactions according to weight ratio
+# This makes RIPPER see illicit transactions more often
+repeat_times = round(weight_illicit / weight_licit)
+illicit_train = train[train['class'] == 1]
+licit_train = train[train['class'] == 0]
+
+# Repeat illicit transactions
+illicit_repeated = pd.concat([illicit_train] * repeat_times, ignore_index=True)
+
+# Combine back together and shuffle
+train_balanced = pd.concat([illicit_repeated, licit_train], ignore_index=True)
+train_balanced = train_balanced.sample(frac=1, random_state=42).reset_index(drop=True)
+
+# Update X and y
+X_train = train_balanced[feature_cols]
+y_train = train_balanced['class']
+
+print(f"\nAfter balancing:")
+print(f"Illicit transactions: {(y_train == 1).sum()}")
+print(f"Licit transactions: {(y_train == 0).sum()}")
