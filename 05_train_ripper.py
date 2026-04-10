@@ -34,7 +34,7 @@ print(f"Illicit transactions: {(y_train == 1).sum()}")
 print(f"Licit transactions: {(y_train == 0).sum()}")
 
 # Repeat illicit transactions according to weight ratio
-repeat_times = round(weight_illicit / weight_licit)
+repeat_times = min(5, round(weight_illicit / weight_licit))
 
 illicit_train = train[train['class'] == 1]
 licit_train = train[train['class'] == 0]

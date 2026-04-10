@@ -2,13 +2,15 @@ import pandas as pd
 import numpy as np
 import os
 import pickle
+import matplotlib.pyplot as plt
 from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
     roc_auc_score,
     confusion_matrix,
-    classification_report
+    classification_report,
+    ConfusionMatrixDisplay
 )
 
 # Paths
@@ -64,5 +66,7 @@ def evaluate(y_true, y_pred, set_name):
 # Run evaluation
 evaluate(y_val, y_val_pred, "VALIDATION SET")
 evaluate(y_test, y_test_pred, "TEST SET")
-
+ConfusionMatrixDisplay.from_predictions(y_test, y_test_pred)
+plt.title("RIPPER Confusion Matrix")
+plt.show()
 print("\n=== STEP 6 COMPLETE: Evaluation Done ===")
