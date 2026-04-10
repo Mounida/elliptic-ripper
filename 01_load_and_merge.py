@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-
+import os
 DATA_DIR = 'data/'
 
 FEATURES_PATH = os.path.join(DATA_DIR, 'elliptic_txs_features.csv')
