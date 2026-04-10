@@ -35,6 +35,8 @@ low_corr_cols = [col for col in high_variance_cols if col not in to_drop]
 
 print(f"After correlation filter: {len(low_corr_cols)} features")
 print(f"Removed: {len(to_drop)} features")
+print("Removed low variance features:", len(low_variance_cols))
+print("Removed high correlation features:", len(to_drop))
 
 final_cols = ['id', 'time_step'] + low_corr_cols + ['class']
 df_selected = df[final_cols]

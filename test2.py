@@ -36,7 +36,7 @@ print(labeled['class'].value_counts())
 
 # Imbalance ratio (dynamic)
 counts = labeled['class'].value_counts()
-ratio = round(counts[2] / counts[1], 2)
+ratio = round(counts.max() / counts.min(), 2)
 print("\nImbalance ratio:", ratio, ": 1")
 
 print("\n=== TIME STEPS ===")
