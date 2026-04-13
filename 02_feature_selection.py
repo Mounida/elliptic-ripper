@@ -32,6 +32,7 @@ to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
 
 # Keep the rest
 low_corr_cols = [col for col in high_variance_cols if col not in to_drop]
+low_variance_cols = [col for col in feature_cols if col not in high_variance_cols]
 
 print(f"After correlation filter: {len(low_corr_cols)} features")
 print(f"Removed: {len(to_drop)} features")
