@@ -55,7 +55,6 @@ def evaluate(y_true, y_pred, set_name):
     print(f"\nPrecision (illicit): {round(precision_score(y_true, y_pred, zero_division=0), 4)}")
     print(f"Recall (illicit):    {round(recall_score(y_true, y_pred, zero_division=0), 4)}")
     print(f"F1 Score (illicit):  {round(f1_score(y_true, y_pred, zero_division=0), 4)}")
-    print(f"AUC-ROC:             {round(roc_auc_score(y_true, y_pred), 4)}")
     print(f"\nConfusion Matrix:")
     cm = confusion_matrix(y_true, y_pred)
     print(f"  True Licit (TN):     {cm[0][0]}")
