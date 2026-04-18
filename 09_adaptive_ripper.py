@@ -11,13 +11,6 @@ FIGURES_DIR = 'outputs/figures/'
 os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
-# ─────────────────────────────────────────────
-# LOAD DATA
-# We need the full timeline in one place.
-# We reconstruct it by merging train + val + test
-# in chronological order.
-# ─────────────────────────────────────────────
-
 train = pd.read_csv(os.path.join(DATA_DIR, 'train.csv'))
 val   = pd.read_csv(os.path.join(DATA_DIR, 'val.csv'))
 test  = pd.read_csv(os.path.join(DATA_DIR, 'test.csv'))
