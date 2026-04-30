@@ -128,7 +128,7 @@ print(results_df[['window_size', 'steps', 'n_transactions', 'n_rules',
                    'val_f1', 'test_f1', 'test_precision', 'test_recall', 'test_auc']].to_string(index=False))
 
 # Find best window based on test F1
-best = results_df.loc[results_df['test_f1'].idxmax()]
+best = results_df.loc[results_df['val_f1'].idxmax()]
 
 print(f"\n{'='*50}")
 print(f"BEST WINDOW SIZE: {int(best['window_size'])} time steps")

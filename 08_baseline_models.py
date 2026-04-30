@@ -49,7 +49,11 @@ X_test  = test[feature_cols]; y_test = test['class']
 
 print(f"Train: {len(train)} | Val: {len(val)} | Test: {len(test)}")
 print(f"Balanced training set: {len(X_train)}")
-
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_train_lr = scaler.fit_transform(X_train)
+X_val_lr   = scaler.transform(X_val)
+X_test_lr  = scaler.transform(X_test)
 # Define models
 models = {
     'Logistic Regression': LogisticRegression(
@@ -70,7 +74,10 @@ models = {
 trained_models = {}
 for name, model in models.items():
     print(f"\nTraining {name}...")
-    model.fit(X_train, y_train)
+    if name == 'Logistic Regression':
+        model.fit(X_train_lr, y_train)
+    else:
+        model.fit(X_train, y_train)    
     trained_models[name] = model
     filename = name.lower().replace(' ', '_') + '_model.pkl'
     with open(os.path.join(DATA_DIR, filename), 'wb') as f:
@@ -92,7 +99,6 @@ def evaluate(model, X, y, model_name, set_name):
         'TP': int(tp), 'FP': int(fp),
         'TN': int(tn), 'FN': int(fn)
     }
-
 # Evaluate all models including RIPPER
 all_models = {'RIPPER': ripper_clf, **trained_models}
 all_results = []
