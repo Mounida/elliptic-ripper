@@ -125,7 +125,7 @@ print(f"\n{'='*50}")
 print("ROLLING WINDOW COMPARISON")
 print(f"{'='*50}")
 print(results_df[['window_size', 'steps', 'n_transactions', 'n_rules', 
-                   'val_f1', 'test_f1', 'test_precision', 'test_recall', 'test_auc']].to_string(index=False))
+                   'val_f1', 'test_f1', 'test_precision', 'test_recall']].to_string(index=False))
 
 # Find best window based on test F1
 best = results_df.loc[results_df['val_f1'].idxmax()]

@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 DATA_DIR = 'data/'
-INPUT_PATH = os.path.join(DATA_DIR, 'selected_features.csv')
+INPUT_PATH = os.path.join(DATA_DIR, 'labeled_data.csv')
 
 df = pd.read_csv(INPUT_PATH)
 
@@ -13,12 +13,12 @@ val = df[(df['time_step'] >= 35) & (df['time_step'] <= 42)].reset_index(drop=Tru
 test = df[df['time_step'] >= 43].reset_index(drop=True)
 
 #save to csv files
-train.to_csv(os.path.join(DATA_DIR, 'train.csv'), index=False)
-val.to_csv(os.path.join(DATA_DIR, 'val.csv'), index=False)
-test.to_csv(os.path.join(DATA_DIR, 'test.csv'), index=False)
+train.to_csv(os.path.join(DATA_DIR, 'train_selected.csv'), index=False)
+val.to_csv(os.path.join(DATA_DIR, 'val_selected.csv'), index=False)
+test.to_csv(os.path.join(DATA_DIR, 'test_selected.csv'), index=False)
 print("\nCheck no overlap:")
 print("Train/Test overlap:", set(train['id']).intersection(set(test['id'])))
-print("=== STEP 3 COMPLETE: Temporal Split ===")
+print("=== STEP 2 COMPLETE: Temporal Split ===")
 print(f"\nTrain (steps 1-34):      {len(train)} transactions")
 print(f"  Illicit: {(train['class']==1).sum()}")
 print(f"  Licit:   {(train['class']==0).sum()}")
@@ -34,4 +34,4 @@ print(f"  Illicit: {(test['class']==1).sum()}")
 print(f"  Licit:   {(test['class']==0).sum()}")
 print(f"  Imbalance ratio: {round((test['class']==0).sum() / (test['class']==1).sum(), 2)}:1")
 
-print(f"\nSaved: train.csv, val.csv, test.csv")
+print(f"\nSaved: train_selected.csv, val_selected.csv, test_selected.csv")

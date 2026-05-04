@@ -1,20 +1,21 @@
 import pandas as pd
 import numpy as np
 import os
+from sklearn.feature_selection import VarianceThreshold
 
 DATA_DIR = 'data/'
-INPUT_PATH = os.path.join(DATA_DIR, 'labeled_data.csv')
-OUTPUT_PATH = os.path.join(DATA_DIR, 'selected_features.csv')
+train = pd.read_csv(os.path.join(DATA_DIR, 'train_selected.csv'))
+val   = pd.read_csv(os.path.join(DATA_DIR, 'val_selected.csv'))
+test  = pd.read_csv(os.path.join(DATA_DIR, 'test_selected.csv'))
 
-df=pd.read_csv(INPUT_PATH)
+
 feature_cols = [f'f{i}' for i in range(1, 166)]
 print(f"Starting features: {len(feature_cols)}")
 
 # Filter 1: Remove low variance features
-from sklearn.feature_selection import VarianceThreshold
 
 selector = VarianceThreshold(threshold=0.01)
-selector.fit(df[feature_cols])
+selector.fit(train[feature_cols])
 
 # Get the names of features that passed the variance threshold filter (variance >= 0.01)   
 high_variance_cols = [feature_cols[i] for i in range(len(feature_cols)) if selector.get_support()[i]]
@@ -23,31 +24,34 @@ print(f"After variance filter: {len(high_variance_cols)} features")
 print(f"Removed: {len(feature_cols) - len(high_variance_cols)} features")
 
 # Filter 2: Remove highly correlated features
-corr_matrix = df[high_variance_cols].corr().abs()
+corr_matrix = train[high_variance_cols].corr().abs()
 upper = corr_matrix.where(
     np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
 )
-# Find columns where correlation > 0.95
 to_drop = [col for col in upper.columns if any(upper[col] > 0.95)]
-
-# Keep the rest
 low_corr_cols = [col for col in high_variance_cols if col not in to_drop]
-low_variance_cols = [col for col in feature_cols if col not in high_variance_cols]
 
 print(f"After correlation filter: {len(low_corr_cols)} features")
-print(f"Removed: {len(to_drop)} features")
-print("Removed low variance features:", len(low_variance_cols))
-print("Removed high correlation features:", len(to_drop))
+print(f"Removed (high correlation): {len(to_drop)} features")
 
+# --- Apply the SAME column list to all three splits ---
 final_cols = ['id', 'time_step'] + low_corr_cols + ['class']
-df_selected = df[final_cols]
-df_selected.to_csv(OUTPUT_PATH, index=False)
 
-print(f"\n=== STEP 2 COMPLETE: Feature Selection ===")
+train_sel = train[final_cols]
+val_sel   = val[final_cols]
+test_sel  = test[final_cols]
+
+train_sel.to_csv(os.path.join(DATA_DIR, 'train.csv'), index=False)
+val_sel.to_csv(os.path.join(DATA_DIR,   'val.csv'),   index=False)
+test_sel.to_csv(os.path.join(DATA_DIR,  'test.csv'),  index=False)
+
+print(f"\n=== STEP 3 COMPLETE: Feature Selection ===")
 print(f"Original features: {len(feature_cols)}")
 print(f"After variance filter: {len(high_variance_cols)}")
 print(f"After correlation filter: {len(low_corr_cols)}")
 print(f"Total features removed: {len(feature_cols) - len(low_corr_cols)}")
-print(f"\nFinal dataset shape: {df_selected.shape}")
-print(f"\nSaved to: {OUTPUT_PATH}")
+print(f"\nTrain shape:  {train_sel.shape}")
+print(f"Val shape:    {val_sel.shape}")
+print(f"Test shape:   {test_sel.shape}")
+print(f"\nSaved: train.csv, val.csv, test.csv")
 

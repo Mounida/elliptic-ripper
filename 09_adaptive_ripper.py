@@ -207,7 +207,7 @@ sliding_test   = sliding_df[sliding_df['predict_step'].isin(test_steps)]
 incremental_test = incremental_df[incremental_df['predict_step'].isin(test_steps)]
 
 print(f"\nOn test period steps (43-49):")
-print(f"  Static RIPPER     — F1: 0.0185  AUC: 0.4867  (from 06_evaluate.py)")
+print(f"  Static RIPPER     — F1: 0.0152  (from 06_evaluate.py, corrected pipeline)")
 print(f"  Sliding window    — F1: {round(sliding_test['f1'].mean(), 4):.4f}  "
       f"AUC: {round(sliding_test['auc'].dropna().mean(), 4):.4f}")
 print(f"  Incremental       — F1: {round(incremental_test['f1'].mean(), 4):.4f}  "

@@ -6,6 +6,7 @@ import pickle
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     f1_score, precision_score, recall_score,
     roc_auc_score, confusion_matrix
@@ -31,10 +32,10 @@ with open(os.path.join(DATA_DIR, 'ripper_model.pkl'), 'rb') as f:
 
 feature_cols = [col for col in train.columns if col.startswith('f')]
 
-# Build balanced training set
-weight_illicit = class_weights['1']
-weight_licit   = class_weights['0']
-repeat_times   = round(weight_illicit / weight_licit)
+# Build balanced training set — using count ratio (correct approach)
+n_illicit    = (train['class'] == 1).sum()
+n_licit      = (train['class'] == 0).sum()
+repeat_times = min(8, round(n_licit / n_illicit))
 
 illicit_train  = train[train['class'] == 1]
 licit_train    = train[train['class'] == 0]
@@ -49,11 +50,13 @@ X_test  = test[feature_cols]; y_test = test['class']
 
 print(f"Train: {len(train)} | Val: {len(val)} | Test: {len(test)}")
 print(f"Balanced training set: {len(X_train)}")
-from sklearn.preprocessing import StandardScaler
-scaler = StandardScaler()
+
+# Scale for Logistic Regression only
+scaler     = StandardScaler()
 X_train_lr = scaler.fit_transform(X_train)
 X_val_lr   = scaler.transform(X_val)
 X_test_lr  = scaler.transform(X_test)
+
 # Define models
 models = {
     'Logistic Regression': LogisticRegression(
@@ -77,7 +80,7 @@ for name, model in models.items():
     if name == 'Logistic Regression':
         model.fit(X_train_lr, y_train)
     else:
-        model.fit(X_train, y_train)    
+        model.fit(X_train, y_train)
     trained_models[name] = model
     filename = name.lower().replace(' ', '_') + '_model.pkl'
     with open(os.path.join(DATA_DIR, filename), 'wb') as f:
@@ -85,36 +88,53 @@ for name, model in models.items():
     print(f"Saved: {filename}")
 
 # Evaluation function
-def evaluate(model, X, y, model_name, set_name):
+# Bug fix: LR needs scaled inputs, others use raw
+# Bug fix: use predict_proba for AUC when available
+def evaluate(model, model_name, X_raw, X_scaled, y, set_name):
+    # Use scaled data for LR, raw for others
+    X = X_scaled if model_name == 'Logistic Regression' else X_raw
+
     y_pred = pd.Series(model.predict(X)).astype(int)
-    cm = confusion_matrix(y, y_pred)
+    cm     = confusion_matrix(y, y_pred)
     tn, fp, fn, tp = cm.ravel()
+
+    # AUC: use predict_proba if available, else fall back to binary pred
+    if hasattr(model, 'predict_proba'):
+        y_score = model.predict_proba(X)[:, 1]
+    else:
+        y_score = y_pred  # RIPPER fallback
+
     return {
         'model':     model_name,
         'set':       set_name,
         'precision': round(precision_score(y, y_pred, zero_division=0), 4),
         'recall':    round(recall_score(y, y_pred, zero_division=0), 4),
         'f1':        round(f1_score(y, y_pred, zero_division=0), 4),
-        'auc':       round(roc_auc_score(y, y_pred), 4),
+        'auc':       round(roc_auc_score(y, y_score), 4),
         'TP': int(tp), 'FP': int(fp),
         'TN': int(tn), 'FN': int(fn)
     }
+
 # Evaluate all models including RIPPER
 all_models = {'RIPPER': ripper_clf, **trained_models}
 all_results = []
 
 for model_name, model in all_models.items():
-    for X, y, set_name in [(X_val, y_val, 'Validation'),
-                            (X_test, y_test, 'Test')]:
-        all_results.append(evaluate(model, X, y, model_name, set_name))
+    for X_raw, X_scaled, y, set_name in [
+        (X_val,  X_val_lr,  y_val,  'Validation'),
+        (X_test, X_test_lr, y_test, 'Test')
+    ]:
+        all_results.append(
+            evaluate(model, model_name, X_raw, X_scaled, y, set_name)
+        )
 
 results_df = pd.DataFrame(all_results)
 
 # Print results
 for set_name in ['Validation', 'Test']:
-    print(f"\n{'='*65}")
+    print(f"\n{'='*70}")
     print(f"RESULTS — {set_name.upper()} SET")
-    print(f"{'='*65}")
+    print(f"{'='*70}")
     subset = results_df[results_df['set'] == set_name]
     print(subset[['model', 'precision', 'recall', 'f1', 'auc',
                   'TP', 'FP', 'FN']].to_string(index=False))
@@ -124,8 +144,10 @@ print(f"\nSaved: outputs/results/baseline_comparison.csv")
 
 # Plot: Validation vs Test F1
 model_names = list(all_models.keys())
-val_f1s  = [results_df[(results_df['model']==m) & (results_df['set']=='Validation')]['f1'].values[0] for m in model_names]
-test_f1s = [results_df[(results_df['model']==m) & (results_df['set']=='Test')]['f1'].values[0] for m in model_names]
+val_f1s  = [results_df[(results_df['model']==m) & 
+            (results_df['set']=='Validation')]['f1'].values[0] for m in model_names]
+test_f1s = [results_df[(results_df['model']==m) & 
+            (results_df['set']=='Test')]['f1'].values[0] for m in model_names]
 
 x     = np.arange(len(model_names))
 width = 0.35
@@ -149,7 +171,8 @@ ax.set_ylim(0, 1.05)
 ax.legend()
 ax.grid(True, alpha=0.3, axis='y')
 plt.tight_layout()
-plt.savefig(os.path.join(FIGURES_DIR, 'baseline_f1_comparison.png'), dpi=150, bbox_inches='tight')
+plt.savefig(os.path.join(FIGURES_DIR, 'baseline_f1_comparison.png'),
+            dpi=150, bbox_inches='tight')
 plt.show()
 print("Saved: baseline_f1_comparison.png")
 
